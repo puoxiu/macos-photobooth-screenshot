@@ -61,12 +61,36 @@ sips -s format jpeg ~/Desktop/photobooth_screenshots/photobooth_${TIMESTAMP}.png
 
 Use the `deliver_attachments` tool to send the JPG file. **Do NOT delete the files** — the user wants to keep all screenshots archived in the folder.
 
+**Tool call:**
+
 ```json
 {
   "attachments": "[\"/Users/xing/Desktop/photobooth_screenshots/photobooth_<TIMESTAMP>.jpg\"]",
   "explanation": "Send Photo Booth screenshot to user"
 }
 ```
+
+**Expected successful response:**
+
+```json
+{
+  "type": "deliver_attachments_tool_result",
+  "attachments": [
+    {
+      "filePath": "/Users/xing/Desktop/photobooth_screenshots/photobooth_<TIMESTAMP>.jpg",
+      "fileName": "photobooth_<TIMESTAMP>.jpg",
+      "fileSize": 80000,
+      "mimeType": "image/jpeg"
+    }
+  ],
+  "message": "Successfully delivered 1 attachment(s)"
+}
+```
+
+If the response shows `"isError": false` and includes the file path, the delivery was successful. If `"isError": true`, check:
+- File path is correct and file exists on disk
+- File format is JPG (not PNG — PNG attachments fail silently on some IM channels)
+- Path is under `~/Desktop/` (not `/tmp/`)
 
 ### Step 5: Inform the user
 
