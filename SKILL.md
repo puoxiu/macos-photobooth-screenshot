@@ -21,23 +21,29 @@ Automate the full workflow of opening Photo Booth, taking a window screenshot, c
 
 ### Step 1: Find the correct Python
 
-The script requires `pyobjc-framework-Quartz`. Find which Python has it installed:
+The script requires `pyobjc-framework-Quartz`. Auto-detect which Python has it installed:
 
 ```bash
-# Check default python3 first
-python3 -c "import Quartz; print('OK')" 2>/dev/null && echo "USE_DEFAULT" || \
-  # Try anaconda3 if default fails
-  (ls ~/anaconda3/bin/python3 2>/dev/null && ~/anaconda3/bin/python3 -c "import Quartz; print('OK')" 2>/dev/null && echo "USE_ANACONDA") || \
-  # Try homebrew python3
-  (/opt/homebrew/bin/python3 -c "import Quartz; print('OK')" 2>/dev/null && echo "USE_HOMEBREW") || \
-  echo "NEED_INSTALL"
+# Try default python3 first
+if python3 -c "import Quartz" 2>/dev/null; then
+  PYTHON=python3
+# Try anaconda3 ONLY if it exists on this machine
+elif [ -d ~/anaconda3 ] && ~/anaconda3/bin/python3 -c "import Quartz" 2>/dev/null; then
+  PYTHON=~/anaconda3/bin/python3
+# Try homebrew python3 ONLY if it exists
+elif [ -f /opt/homebrew/bin/python3 ] && /opt/homebrew/bin/python3 -c "import Quartz" 2>/dev/null; then
+  PYTHON=/opt/homebrew/bin/python3
+# Try miniconda3 ONLY if it exists
+elif [ -d ~/miniconda3 ] && ~/miniconda3/bin/python3 -c "import Quartz" 2>/dev/null; then
+  PYTHON=~/miniconda3/bin/python3
+else
+  # No Python found with pyobjc — install it to the default python3
+  pip3 install pyobjc-framework-Quartz
+  PYTHON=python3
+fi
 ```
 
-Set `PYTHON` variable accordingly:
-- `USE_DEFAULT` → `PYTHON=python3`
-- `USE_ANACONDA` → `PYTHON=~/anaconda3/bin/python3`
-- `USE_HOMEBREW` → `PYTHON=/opt/homebrew/bin/python3`
-- `NEED_INSTALL` → run `pip3 install pyobjc-framework-Quartz` then retry
+Logic: check each Python only if its directory/binary actually exists on the machine. Don't assume anaconda3 or miniconda3 is installed.
 
 Also find the skill script path:
 ```bash
