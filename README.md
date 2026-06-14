@@ -54,11 +54,12 @@ pip install pyobjc-framework-Quartz
 
 When triggered, the WorkBuddy agent follows this workflow (defined in `SKILL.md`):
 
-1. **Ensure folder exists** — creates `~/Desktop/photobooth_screenshots/`
-2. **Take screenshot** — runs the Python script which opens Photo Booth, waits for the camera, captures the window, and closes Photo Booth
-3. **Convert to JPG** — converts PNG to JPG (PNG attachments don't render in some IM channels like WeChat)
-4. **Deliver** — sends the JPG via `deliver_attachments` to your phone/chat
-5. **Archive** — keeps all screenshots in the folder with timestamps
+1. **Auto-detect Python** — finds which Python has `pyobjc-framework-Quartz` (checks default `python3`, `~/anaconda3/bin/python3`, `/opt/homebrew/bin/python3`)
+2. **Ensure folder exists** — creates `~/Desktop/photobooth_screenshots/`
+3. **Take screenshot** — runs the Python script which opens Photo Booth, waits for the camera, captures the window, and closes Photo Booth
+4. **Convert to JPG** — converts PNG to JPG (PNG attachments don't render in some IM channels like WeChat)
+5. **Deliver** — sends the JPG via `deliver_attachments` to your phone/chat
+6. **Archive** — keeps all screenshots in the folder with timestamps
 
 ## Skill Structure
 
@@ -76,6 +77,7 @@ macos-window-screenshot/
 - **PNG attachments may not render** in some IM channels (e.g. WeChat) — always convert to JPG before delivering
 - Output path must be `~/Desktop/` — `/tmp` paths don't work with `deliver_attachments`
 - Screenshots are never deleted — all archived in `~/Desktop/photobooth_screenshots/`
+- **No hardcoded paths** — Python path is auto-detected; all directories use `~/` relative paths
 
 ## License
 
@@ -138,11 +140,12 @@ pip install pyobjc-framework-Quartz
 
 当技能被触发时，WorkBuddy 智能体会按以下流程执行（定义在 `SKILL.md` 中）：
 
-1. **创建截图文件夹** — 创建 `~/Desktop/photobooth_screenshots/`
-2. **截取摄像头** — 运行 Python 脚本，自动打开 Photo Booth、等待摄像头、截取窗口、关闭应用
-3. **转换为 JPG** — PNG 附件在微信等 IM 渠道可能无法显示，需转为 JPG
-4. **发送截图** — 通过 `deliver_attachments` 发送到你的手机/聊天
-5. **归档保留** — 截图带时间戳保存在文件夹中，不删除
+1. **自动检测 Python** — 找到安装了 `pyobjc-framework-Quartz` 的 Python（依次检查 `python3`、`~/anaconda3/bin/python3`、`/opt/homebrew/bin/python3`）
+2. **创建截图文件夹** — 创建 `~/Desktop/photobooth_screenshots/`
+3. **截取摄像头** — 运行 Python 脚本，自动打开 Photo Booth、等待摄像头、截取窗口、关闭应用
+4. **转换为 JPG** — PNG 附件在微信等 IM 渠道可能无法显示，需转为 JPG
+5. **发送截图** — 通过 `deliver_attachments` 发送到你的手机/聊天
+6. **归档保留** — 截图带时间戳保存在文件夹中，不删除
 
 ## 技能结构
 
@@ -160,6 +163,7 @@ macos-window-screenshot/
 - **PNG 附件在部分 IM 渠道（如微信）可能无法显示**——发送前务必转为 JPG
 - 输出路径必须为 `~/Desktop/`——`/tmp` 路径在 `deliver_attachments` 中不可用
 - 截图不会被删除——全部归档在 `~/Desktop/photobooth_screenshots/`
+- **无硬编码路径**——Python 路径自动检测，目录均使用 `~/` 相对路径，适用于任何用户
 
 ## 开源协议
 

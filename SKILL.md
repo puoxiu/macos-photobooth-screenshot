@@ -19,19 +19,45 @@ Automate the full workflow of opening Photo Booth, taking a window screenshot, c
 
 ## Workflow
 
-### Step 1: Ensure screenshot folder exists
+### Step 1: Find the correct Python
+
+The script requires `pyobjc-framework-Quartz`. Find which Python has it installed:
+
+```bash
+# Check default python3 first
+python3 -c "import Quartz; print('OK')" 2>/dev/null && echo "USE_DEFAULT" || \
+  # Try anaconda3 if default fails
+  (ls ~/anaconda3/bin/python3 2>/dev/null && ~/anaconda3/bin/python3 -c "import Quartz; print('OK')" 2>/dev/null && echo "USE_ANACONDA") || \
+  # Try homebrew python3
+  (/opt/homebrew/bin/python3 -c "import Quartz; print('OK')" 2>/dev/null && echo "USE_HOMEBREW") || \
+  echo "NEED_INSTALL"
+```
+
+Set `PYTHON` variable accordingly:
+- `USE_DEFAULT` → `PYTHON=python3`
+- `USE_ANACONDA` → `PYTHON=~/anaconda3/bin/python3`
+- `USE_HOMEBREW` → `PYTHON=/opt/homebrew/bin/python3`
+- `NEED_INSTALL` → run `pip3 install pyobjc-framework-Quartz` then retry
+
+Also find the skill script path:
+```bash
+SKILL_DIR=$(dirname $(find ~ -path "*/macos-window-screenshot/scripts/photobooth_screenshot.py" 2>/dev/null | head -1))
+# Or use the known path: ~/.workbuddy/skills/macos-window-screenshot/scripts
+```
+
+### Step 2: Ensure screenshot folder exists
 
 ```bash
 mkdir -p ~/Desktop/photobooth_screenshots
 ```
 
-### Step 2: Run the screenshot script
+### Step 3: Run the screenshot script
 
 Generate a timestamp-based filename and run the script:
 
 ```bash
 TIMESTAMP=$(date +%Y%m%d_%H%M%S)
-/Users/xing/anaconda3/bin/python3 ~/.workbuddy/skills/macos-window-screenshot/scripts/photobooth_screenshot.py --output ~/Desktop/photobooth_screenshots/photobooth_${TIMESTAMP}.png --delay 3
+$PYTHON $SKILL_DIR/photobooth_screenshot.py --output ~/Desktop/photobooth_screenshots/photobooth_${TIMESTAMP}.png --delay 3
 ```
 
 The script automatically:
@@ -49,7 +75,7 @@ The script automatically:
 | `--output, -o` | `./photobooth_screenshot.png` | Output file path (must end in .png) |
 | `--delay` | `3.0` | Seconds to wait after opening Photo Booth |
 
-### Step 3: Convert PNG to JPG (required!)
+### Step 4: Convert PNG to JPG (required!)
 
 The script outputs PNG, but IM channels do not support PNG attachments. **Must convert to JPG**:
 
@@ -57,7 +83,7 @@ The script outputs PNG, but IM channels do not support PNG attachments. **Must c
 sips -s format jpeg ~/Desktop/photobooth_screenshots/photobooth_${TIMESTAMP}.png --out ~/Desktop/photobooth_screenshots/photobooth_${TIMESTAMP}.jpg
 ```
 
-### Step 4: Deliver the image via attachment
+### Step 5: Deliver the image via attachment
 
 Use the `deliver_attachments` tool to send the JPG file. **Do NOT delete the files** — the user wants to keep all screenshots archived in the folder.
 
@@ -65,10 +91,12 @@ Use the `deliver_attachments` tool to send the JPG file. **Do NOT delete the fil
 
 ```json
 {
-  "attachments": "[\"/Users/xing/Desktop/photobooth_screenshots/photobooth_<TIMESTAMP>.jpg\"]",
+  "attachments": "[\"$HOME/Desktop/photobooth_screenshots/photobooth_<TIMESTAMP>.jpg\"]",
   "explanation": "Send Photo Booth screenshot to user"
 }
 ```
+
+Replace `$HOME` with the actual home directory path and `<TIMESTAMP>` with the generated timestamp.
 
 **Expected successful response:**
 
@@ -77,7 +105,7 @@ Use the `deliver_attachments` tool to send the JPG file. **Do NOT delete the fil
   "type": "deliver_attachments_tool_result",
   "attachments": [
     {
-      "filePath": "/Users/xing/Desktop/photobooth_screenshots/photobooth_<TIMESTAMP>.jpg",
+      "filePath": "<home>/Desktop/photobooth_screenshots/photobooth_<TIMESTAMP>.jpg",
       "fileName": "photobooth_<TIMESTAMP>.jpg",
       "fileSize": 80000,
       "mimeType": "image/jpeg"
@@ -92,31 +120,35 @@ If the response shows `"isError": false` and includes the file path, the deliver
 - File format is JPG (not PNG — PNG attachments fail silently on some IM channels)
 - Path is under `~/Desktop/` (not `/tmp/`)
 
-### Step 5: Inform the user
+### Step 6: Inform the user
 
 Tell the user the screenshot has been sent and is also saved in `~/Desktop/photobooth_screenshots/`.
 
 ## Complete Example
 
 ```bash
-# 1. Ensure folder exists
+# 1. Find Python with pyobjc
+PYTHON=python3  # adjust if needed
+SKILL_DIR=~/.workbuddy/skills/macos-window-screenshot/scripts
+
+# 2. Ensure folder exists
 mkdir -p ~/Desktop/photobooth_screenshots
 
-# 2. Take screenshot
+# 3. Take screenshot
 TIMESTAMP=$(date +%Y%m%d_%H%M%S)
-/Users/xing/anaconda3/bin/python3 ~/.workbuddy/skills/macos-window-screenshot/scripts/photobooth_screenshot.py --output ~/Desktop/photobooth_screenshots/photobooth_${TIMESTAMP}.png --delay 3
+$PYTHON $SKILL_DIR/photobooth_screenshot.py --output ~/Desktop/photobooth_screenshots/photobooth_${TIMESTAMP}.png --delay 3
 
-# 3. Convert to JPG
+# 4. Convert to JPG
 sips -s format jpeg ~/Desktop/photobooth_screenshots/photobooth_${TIMESTAMP}.png --out ~/Desktop/photobooth_screenshots/photobooth_${TIMESTAMP}.jpg
 
-# 4. Deliver via deliver_attachments tool (use the JPG file)
+# 5. Deliver via deliver_attachments tool (use the JPG file)
 
-# 5. Do NOT delete files — keep archived
+# 6. Do NOT delete files — keep archived
 ```
 
 ## Key Technical Details
 
-- Must use system Python (`/Users/xing/anaconda3/bin/python3`) because the managed Python lacks `pyobjc-framework-Quartz`
+- Python must have `pyobjc-framework-Quartz` installed — auto-detect the correct Python path rather than hardcoding
 - `screencapture -W` (interactive mode) hangs in automation — always use `-l <window_id>` instead
 - AppleScript `System Events` requires Accessibility permissions — use CoreGraphics instead
 - The script filters for windows larger than 100x100 to skip overlay/system windows
@@ -124,3 +156,4 @@ sips -s format jpeg ~/Desktop/photobooth_screenshots/photobooth_${TIMESTAMP}.png
 - **PNG attachments are NOT supported by IM channels** — must convert to JPG before delivering
 - Always use `deliver_attachments` (not HTTP server or other methods) to send files to the user
 - **Do NOT delete screenshots** — keep them archived in `~/Desktop/photobooth_screenshots/` with timestamps
+- **Do NOT hardcode user-specific paths** like `/Users/xxx/` — use `$HOME`, `~/`, or auto-detect with `find`/`which`
