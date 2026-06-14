@@ -1,5 +1,11 @@
 # macOS Photo Booth Screenshot
 
+[English](#english) | [中文](#中文)
+
+---
+
+<a id="english"></a>
+
 A lightweight macOS automation tool that opens Photo Booth, captures a window screenshot, and closes it — all in one command. Designed for [WorkBuddy](https://workbuddy.ai) skills ecosystem.
 
 ## Features
@@ -73,7 +79,9 @@ MIT License. See [LICENSE](LICENSE) for details.
 
 ---
 
-# macOS Photo Booth 截图工具 [中文版]
+<a id="中文"></a>
+
+# macOS Photo Booth 截图工具
 
 一款轻量的 macOS 自动化工具，一键打开 Photo Booth、截取窗口画面、关闭应用。专为 [WorkBuddy](https://workbuddy.ai) 技能生态设计。
 
